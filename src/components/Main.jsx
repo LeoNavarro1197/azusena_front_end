@@ -6,10 +6,10 @@ import BillingButton from "./Buttons/BillingButton.jsx";
 import PQRSButton from "./Buttons/OrientacionAlUsuarioButton.jsx";
 import Render from "./Render";
 import { speakTextWithSpecificVoice } from '../voiceUtils';
-import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
+import { queryAPI, createSocketConnection, setupSocketListeners } from '../api';
 
-const socket = io('http://localhost:5000', { transports: ['websocket', 'polling'] });
+const socket = createSocketConnection();
 
 export default function Main() {
     const [text, setText] = useState('');
@@ -34,13 +34,7 @@ export default function Main() {
 
             setIsResponding(true);
 
-            await fetch("http://localhost:5000/query", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ query_text: queryText }),
-            });
+            await queryAPI(queryText);
 
             setText('');
             setShowChat(true);
@@ -102,42 +96,34 @@ export default function Main() {
     };
 
     useEffect(() => {
-        socket.on('connect', () => {
-            console.log('Conectado al servidor WebSocket');
-        });
+        const cleanup = setupSocketListeners(socket, {
+            onConnect: () => {
+                console.log('Conectado al servidor WebSocket');
+            },
+            onPreResponse: (preResponseText) => {
+                if (textareaRef.current) {
+                    textareaRef.current.value = preResponseText;
+                }
 
-        socket.on('pre_response', (data) => {
-            const preResponseText = data.pre_response;
+                if (preResponseText) {
+                    handleSpeak(preResponseText);
+                }
+            },
+            onFinalResponse: (generatedText) => {
+                setChatHistory(prevHistory => [
+                    ...prevHistory,
+                    { text: "", isUser: false }
+                ]);
 
-            if (textareaRef.current) {
-                textareaRef.current.value = preResponseText;
-            }
+                handleDisplayWordByWord(generatedText);
 
-            if (preResponseText) {
-                handleSpeak(preResponseText);
-            }
-        });
-
-        socket.on('final_response', (data) => {
-            const generatedText = data.response;
-
-            setChatHistory(prevHistory => [
-                ...prevHistory,
-                { text: "", isUser: false }
-            ]);
-
-            handleDisplayWordByWord(generatedText);
-
-            if (generatedText) {
-                handleSpeak(generatedText);
+                if (generatedText) {
+                    handleSpeak(generatedText);
+                }
             }
         });
 
-        return () => {
-            socket.off('pre_response');
-            socket.off('final_response');
-            socket.off('connect');
-        };
+        return cleanup;
     }, []);
 
     useEffect(() => {
