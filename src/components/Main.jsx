@@ -8,6 +8,7 @@ import Render from "./Render";
 import { speakTextWithSpecificVoice } from '../voiceUtils';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
 
 const socket = io('http://localhost:5000', { transports: ['websocket', 'polling'] });
 
@@ -195,7 +196,29 @@ export default function Main() {
                                         return (
                                             <div key={index} className={`flex ${isUserMessage ? 'justify-end' : 'justify-start'}`}>
                                                 <div className={`px-4 py-2 mb-2 text-white text-xs rounded-2xl ${isUserMessage ? 'border border-white' : 'bg-transparent border-2 border-customGreen'}`}>
-                                                    {message.text}
+                                                    {isUserMessage ? (
+                                                        message.text
+                                                    ) : (
+                                                        <div className="markdown-content">
+                                                            <ReactMarkdown 
+                                                                components={{
+                                                                    h1: ({node, ...props}) => <h1 className="text-lg font-bold mb-2 text-customGreen" {...props} />,
+                                                                    h2: ({node, ...props}) => <h2 className="text-md font-bold mb-2 text-customGreen" {...props} />,
+                                                                    h3: ({node, ...props}) => <h3 className="text-sm font-bold mb-1 text-customGreen" {...props} />,
+                                                                    p: ({node, ...props}) => <p className="mb-2" {...props} />,
+                                                                    ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2" {...props} />,
+                                                                    ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-2" {...props} />,
+                                                                    li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                                                                    strong: ({node, ...props}) => <strong className="font-bold text-customGreen" {...props} />,
+                                                                    em: ({node, ...props}) => <em className="italic" {...props} />,
+                                                                    code: ({node, ...props}) => <code className="bg-gray-800 px-1 py-0.5 rounded text-xs" {...props} />,
+                                                                    blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-customGreen pl-4 italic" {...props} />
+                                                                }}
+                                                            >
+                                                                {message.text}
+                                                            </ReactMarkdown>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
