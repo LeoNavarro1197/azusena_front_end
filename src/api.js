@@ -1,21 +1,19 @@
 import io from 'socket.io-client';
 
 // Configuración centralizada de la API
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://127.0.0.1:8000';
 
 // Función para enviar consultas al chat
 export const queryAPI = async (queryText) => {
-  const response = await fetch(`${API_URL}/query`, {
+  const response = await fetch(`${API_URL}/azusena_api/query/text`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ query_text: queryText }),
+    body: JSON.stringify({ query: queryText }),
   });
   
-  if (!response.ok) {
-    throw new Error('Failed to fetch');
-  }
+  if (!response.ok) {throw new Error('Failed to fetch');}
   
   return response.json();
 };

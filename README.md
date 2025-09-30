@@ -7,6 +7,19 @@ Repositorio del Frontend del proyecto AzuSena, creado en ReactJS, Junio 2024
 ## Descripción
 Este proyecto está relacionado con una herramienta de inteligencia artificial creada por el SENA en Colombia, la cual es un chatbot para usuarios con información relacionada con temas de la institución. El proyecto utiliza ReactJS como tecnología principal y Tailwind CSS para los estilos.
 
+### Características Principales
+- **Interfaz de Chat Moderna**: Diseño intuitivo y responsive para una experiencia de usuario óptima.
+- **Soporte Markdown**: Visualización enriquecida de mensajes con formato Markdown, incluyendo:
+  - Títulos y encabezados
+  - Listas ordenadas y no ordenadas
+  - Enlaces y referencias
+  - Bloques de código
+  - Tablas
+  - Citas
+  - Texto en negrita e itálica
+- **Tema Oscuro**: Interfaz optimizada para reducir la fatiga visual.
+- **Conexión en Tiempo Real**: Integración con backend mediante WebSocket para respuestas instantáneas.
+
 ## Instalación
 Para clonar y ejecutar este proyecto localmente, sigue estos pasos:
 
@@ -21,6 +34,17 @@ Para clonar y ejecutar este proyecto localmente, sigue estos pasos:
    ```
    npm install
    ```
+
+   Las principales dependencias incluyen:
+   - react@18.3.1
+   - react-dom@18.3.1
+   - socket.io-client@4.7.5
+   - marked@16.3.0
+   - @react-three/fiber@8.17.6
+   - @react-three/drei@9.111.5
+   - react-router-dom@6.27.0
+   - react-icons@5.3.0
+   - tailwindcss@3.4.9
 
 ## Cómo iniciar
 Para iniciar la aplicación en un entorno de desarrollo, puedes usar el siguiente comando. 
@@ -39,7 +63,11 @@ El proyecto React constituye la interfaz de usuario del chatbot. Este proyecto e
 
 - **React**: Biblioteca de JavaScript para construir interfaces de usuario.
 - **Tailwind CSS**: Framework CSS para estilos rápidos y responsivos.
-- **API de Backend**: Se conecta con el backend a través de llamadas API para enviar preguntas y recibir respuestas del chatbot.
+- **Socket.IO**: Biblioteca para comunicación en tiempo real con el backend.
+- **Marked**: Biblioteca para renderizado de contenido Markdown.
+- **Three.js y React Three Fiber**: Para efectos visuales y animaciones 3D.
+- **React Router**: Para navegación entre diferentes vistas de la aplicación.
+- **React Icons**: Conjunto de iconos para mejorar la interfaz de usuario.
 
 ### 2. Proyecto Backend (FastAPI)
 

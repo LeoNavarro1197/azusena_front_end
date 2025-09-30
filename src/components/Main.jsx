@@ -1,41 +1,51 @@
-import React, { useState, useRef, useEffect } from "react";
-import MasterButton from "./Buttons/MasterButton.jsx";
-import AdmissionButton from "./Buttons/AdmissionButton.jsx";
-import AffiliationButton from "./Buttons/AffiliationButton.jsx";
-import BillingButton from "./Buttons/BillingButton.jsx";
-import PQRSButton from "./Buttons/OrientacionAlUsuarioButton.jsx";
-import Render from "./Render";
+import React, { useState, useRef, useEffect } from 'react';
+import { marked } from 'marked';
+import { createSocketConnection, setupSocketListeners } from '../api';
 import { speakTextWithSpecificVoice } from '../voiceUtils';
-import { useNavigate } from 'react-router-dom';
-import { queryAPI, createSocketConnection, setupSocketListeners } from '../api';
-import ReactMarkdown from 'react-markdown';
+import { queryAPI } from '../api';
+import MasterButton from './Buttons/MasterButton';
+import Render from './Render';
+import AdmissionButton from './Buttons/AdmissionButton';
+import AffiliationButton from './Buttons/AffiliationButton';
+import BillingButton from './Buttons/BillingButton';
+import PQRSButton from './Buttons/OrientacionAlUsuarioButton';
+
+// Configurar marked para que sea seguro y soporte saltos de línea
+marked.setOptions({
+    breaks: true,
+    sanitize: true
+});
 
 const socket = createSocketConnection();
 
 export default function Main() {
     const [text, setText] = useState('');
     const [chatHistory, setChatHistory] = useState([]);
-    const [showChat, setShowChat] = useState(false);
     const [isResponding, setIsResponding] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [showChat, setShowChat] = useState(false);
     const textareaRef = useRef(null);
     const chatEndRef = useRef(null);
-    const navigate = useNavigate();
 
-    const handleSubmit = async (queryText = text) => {
-        if (!queryText || !queryText.trim()) {
-            console.log("El texto está vacío, no se ejecuta el submit.");
-            return;
-        }
+    const handleSubmit = async (customText) => {
+        const queryText = customText || text;
+        if (!queryText.trim()) return;
+
+        setIsResponding(true);
+
         try {
             setChatHistory(prevHistory => [
                 ...prevHistory,
                 { text: queryText, isUser: true }
             ]);
 
-            setIsResponding(true);
+            const response = await queryAPI(queryText);
 
-            await queryAPI(queryText);
+            // Agregar la respuesta del backend al historial de chat
+            setChatHistory(prevHistory => [
+                ...prevHistory,
+                { text: response.response, isUser: false }
+            ]);
 
             setText('');
             setShowChat(true);
@@ -186,23 +196,7 @@ export default function Main() {
                                                         message.text
                                                     ) : (
                                                         <div className="markdown-content">
-                                                            <ReactMarkdown 
-                                                                components={{
-                                                                    h1: ({node, ...props}) => <h1 className="text-lg font-bold mb-2 text-customGreen" {...props} />,
-                                                                    h2: ({node, ...props}) => <h2 className="text-md font-bold mb-2 text-customGreen" {...props} />,
-                                                                    h3: ({node, ...props}) => <h3 className="text-sm font-bold mb-1 text-customGreen" {...props} />,
-                                                                    p: ({node, ...props}) => <p className="mb-2" {...props} />,
-                                                                    ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2" {...props} />,
-                                                                    ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-2" {...props} />,
-                                                                    li: ({node, ...props}) => <li className="mb-1" {...props} />,
-                                                                    strong: ({node, ...props}) => <strong className="font-bold text-customGreen" {...props} />,
-                                                                    em: ({node, ...props}) => <em className="italic" {...props} />,
-                                                                    code: ({node, ...props}) => <code className="bg-gray-800 px-1 py-0.5 rounded text-xs" {...props} />,
-                                                                    blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-customGreen pl-4 italic" {...props} />
-                                                                }}
-                                                            >
-                                                                {message.text}
-                                                            </ReactMarkdown>
+                                                            <div dangerouslySetInnerHTML={{__html: marked(message.text)}} />
                                                         </div>
                                                     )}
                                                 </div>
@@ -234,7 +228,7 @@ export default function Main() {
                             isResponding={isResponding} 
                             isSpeaking={isSpeaking} 
                             stopSpeaking={stopSpeaking} 
-                            onSubmit={handleSubmit} // Ajuste agregado
+                            onSubmit={handleSubmit}
                         />
                     </div>
                 </div>

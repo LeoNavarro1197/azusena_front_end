@@ -1,30 +1,27 @@
 @echo off
+rem -------------------------------------------------
+rem  Script actualizado para el nuevo árbol de carpetas
+rem -------------------------------------------------
 
-:: Establecer la ruta base como el directorio donde se encuentra este archivo .bat
-set BASE_DIR=%~dp0
-
-:: Cambiar al directorio base
-cd /d %BASE_DIR%
-
-:: Iniciar el proyecto React
-cd AzuSena-React
-git fetch
-git checkout ASZ_EntregaFinal
-git pull origin ASZ_EntregaFinal
+:: ----------  React (azusena_front_end) ----------
+rem Cambiamos al directorio del frontend
+cd azusena_front_end
+rem Si la rama principal ya no se llama “main”, cámbiala aquí
+git checkout main
+git pull
+rem Iniciamos el servidor con npm en una nueva ventana de PowerShell
 start powershell -NoExit -Command "npm start"
 cd ..
 
-:: Iniciar el Backend en Python
-cd AzuSena-Backend
-git fetch
-git checkout ASZ_EntregaFinal
-git pull origin ASZ_EntregaFinal
+:: ----------  Backend (azusena_back_end) ----------
+rem Subimos al nivel del proyecto y entramos al backend
+cd azusena_back_end
+rem La única rama disponible se llama local_branch
+git checkout local_branch
+git pull
+rem Activamos el entorno virtual con su nuevo nombre y lanzamos Flask
+start powershell -NoExit -Command "& .\azusena_leo_env\Scripts\Activate; python -m flask run; deactivate"
+cd ..
 
-:: Verificar entorno virtual y activarlo
-if not exist venv (
-    echo Creando entorno virtual...
-    python -m venv venv
-)
-start powershell -NoExit -Command "& %BASE_DIR%AzuSena-Backend\venv\Scripts\Activate.ps1; pip install -r requirements.txt; python -m flask run"
+echo Ambos proyectos se han iniciado.
 
-pause Ambos proyectos se han iniciado.
