@@ -9,6 +9,69 @@ export const stopSpeaking = () => {
     console.log("Reproducción de voz detenida.");
 };
 
+// Elimina la sintaxis Markdown, conservando el texto legible
+const stripMarkdown = (input) => {
+    let output = input || '';
+    // Quitar imágenes conservando el alt
+    output = output.replace(/!\[(.*?)\]\((.*?)\)/g, '$1');
+    // Quitar enlaces conservando el texto
+    output = output.replace(/\[(.*?)\]\((.*?)\)/g, '$1');
+    // Quitar código en bloque ```...
+    output = output.replace(/```([\s\S]*?)```/g, '$1');
+    // Quitar backticks de código en línea
+    output = output.replace(/`([^`]*)`/g, '$1');
+    // Quitar negritas y cursivas
+    output = output.replace(/\*\*([^*]+)\*\*/g, '$1'); // **texto**
+    output = output.replace(/\*([^*]+)\*/g, '$1');       // *texto*
+    output = output.replace(/__([^_]+)__/g, '$1');         // __texto__
+    output = output.replace(/_([^_]+)_/g, '$1');           // _texto_
+    // Quitar encabezados (#, ##, ### ...)
+    output = output.replace(/^#{1,6}\s+/gm, '');
+    // Quitar citas >
+    output = output.replace(/^>\s+/gm, '');
+    // Quitar marcadores de lista (-, *, +) y numeradas
+    output = output.replace(/^\s*[-*+]\s+/gm, '');
+    output = output.replace(/^\s*\d+\.\s+/gm, '');
+    // Quitar reglas horizontales
+    output = output.replace(/^\s*(?:-\s*){3,}$|^\s*(?:_\s*){3,}$|^\s*(?:\*\s*){3,}$/gm, '');
+    // Quitar piping de tablas, dejando el texto
+    output = output.replace(/\|/g, ' ');
+    // Quitar escapes de Markdown
+    output = output.replace(/\\([\\`*_{}\[\]()#+\-.!])/g, '$1');
+    // Reducir espacios y saltos de línea excesivos
+    output = output.replace(/[ ]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n');
+    return output.trim();
+};
+
+// Normaliza el texto para TTS: elimina bullets, emojis y signos que dicen "punto/guion"
+const normalizeForSpeech = (input) => {
+    let output = stripMarkdown(input);
+
+    // Quitar emojis y pictogramas comunes
+    output = output.replace(/[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1F5FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+
+    // Quitar bullets visibles al inicio de línea y en el resto
+    output = output.replace(/^\s*[•▪◦·►]\s+/gm, '');
+    output = output.replace(/[•▪◦·►]/g, ' ');
+
+    // Reemplazar raya/en dash por pausa breve
+    output = output.replace(/[—–]/g, ', ');
+
+    // Reemplazar dos puntos por pausa breve para evitar "dos puntos"
+    output = output.replace(/:\s*/g, ', ');
+
+    // Reemplazar puntos suspensivos por pausa
+    output = output.replace(/…|\.\.\./g, ' ');
+
+    // Eliminar paréntesis pero conservar su contenido
+    output = output.replace(/[()]/g, '');
+
+    // Compactar espacios y saltos
+    output = output.replace(/[ ]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n');
+
+    return output.trim();
+};
+
 export const speakTextWithSpecificVoice = (text, options = {}) => {
     const synth = window.speechSynthesis;
 
@@ -16,6 +79,9 @@ export const speakTextWithSpecificVoice = (text, options = {}) => {
         console.warn("Ya se está reproduciendo una respuesta. Detén la reproducción actual antes de comenzar una nueva.");
         return;
     }
+
+    // Limpiar Markdown y normalizar para TTS antes de dividir y hablar
+    const plainText = normalizeForSpeech(text);
 
     const onVoicesChanged = () => {
         const voices = synth.getVoices();
@@ -31,7 +97,7 @@ export const speakTextWithSpecificVoice = (text, options = {}) => {
 
         if (targetVoice) {
             console.log(`Speaking with: ${targetVoice.name} [${targetVoice.lang}]`);
-            const utterances = splitTextIntoChunks(text); // Dividir el texto en fragmentos
+            const utterances = splitTextIntoChunks(plainText); // Dividir el texto en fragmentos
 
             // Iniciar reproducción secuencial de fragmentos
             isSpeaking = true;
